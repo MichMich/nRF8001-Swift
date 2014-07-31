@@ -9,17 +9,31 @@
 import UIKit
 
 class ViewController: UIViewController {
-                            
+    
+    var nrfManager:NRFManager!
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
-    }
+        
+        nrfManager = NRFManager(
+            onConnect: {
+                println("!!! Connected")
+                
+                let result = self.nrfManager.writeString("Whoopa!")
+            },
+            onDisconnect: {
+                println("!!! Disconnected")
+            },
+            onData: {
+                (string:String, data:NSData)->() in
+                println("!!! Recieved data !!!")
+                println("String: \(string)")
+                println("Data: \(data)")
+            }
+        )
 
-    override func didReceiveMemoryWarning() {
-        super.didReceiveMemoryWarning()
-        // Dispose of any resources that can be recreated.
-    }
 
+    }
 
 }
 
