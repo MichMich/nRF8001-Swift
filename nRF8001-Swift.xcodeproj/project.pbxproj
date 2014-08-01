@@ -13,7 +13,6 @@
 		4C43DBE5198A6E5300C31784 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4C43DBE4198A6E5300C31784 /* Images.xcassets */; };
 		4C43DBF1198A6E5300C31784 /* nRF8001_SwiftTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C43DBF0198A6E5300C31784 /* nRF8001_SwiftTests.swift */; };
 		4C43DBFB198A6E9300C31784 /* NRFManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C43DBFA198A6E9300C31784 /* NRFManager.swift */; };
-		4C43DBFD198A78F800C31784 /* UARTPeripheral.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4C43DBFC198A78F800C31784 /* UARTPeripheral.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -37,9 +36,7 @@
 		4C43DBEF198A6E5300C31784 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		4C43DBF0198A6E5300C31784 /* nRF8001_SwiftTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = nRF8001_SwiftTests.swift; sourceTree = "<group>"; };
 		4C43DBFA198A6E9300C31784 /* NRFManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = NRFManager.swift; sourceTree = "<group>"; };
-		4C43DBFC198A78F800C31784 /* UARTPeripheral.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = UARTPeripheral.swift; sourceTree = "<group>"; };
 		4C43DBFE198A7AFF00C31784 /* nRF8001-Swift-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "nRF8001-Swift-Bridging-Header.h"; sourceTree = "<group>"; };
-		4C43DBFF198A7AFF00C31784 /* UARTPeripheral.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = UARTPeripheral.m; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -87,8 +84,6 @@
 				4C43DBE4198A6E5300C31784 /* Images.xcassets */,
 				4C43DBDB198A6E5300C31784 /* Supporting Files */,
 				4C43DBFA198A6E9300C31784 /* NRFManager.swift */,
-				4C43DBFC198A78F800C31784 /* UARTPeripheral.swift */,
-				4C43DBFF198A7AFF00C31784 /* UARTPeripheral.m */,
 				4C43DBFE198A7AFF00C31784 /* nRF8001-Swift-Bridging-Header.h */,
 			);
 			path = "nRF8001-Swift";
@@ -221,7 +216,6 @@
 				4C43DBE0198A6E5300C31784 /* ViewController.swift in Sources */,
 				4C43DBFB198A6E9300C31784 /* NRFManager.swift in Sources */,
 				4C43DBDE198A6E5300C31784 /* AppDelegate.swift in Sources */,
-				4C43DBFD198A78F800C31784 /* UARTPeripheral.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -416,6 +410,7 @@
 				4C43DBF6198A6E5300C31784 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		4C43DBF7198A6E5300C31784 /* Build configuration list for PBXNativeTarget "nRF8001-SwiftTests" */ = {
 			isa = XCConfigurationList;
@@ -424,6 +419,7 @@
 				4C43DBF9198A6E5300C31784 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

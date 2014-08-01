@@ -10,44 +10,34 @@ import Foundation
 import CoreBluetooth
 
 
-enum ConnectionMode {
+public enum ConnectionMode {
     case None
     case PinIO
     case UART
 }
 
-enum ConnectionStatus {
+public enum ConnectionStatus {
     case Disconnected
     case Scanning
     case Connected
 }
 
 
-// Mark: Initialization
-class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
+
+/*!
+*  @class NRFManager
+*
+*  @discussion The manager for nRF8001 connections.
+*
+*/
+
+// Mark: NRFManager Initialization
+public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
     
-    // Should we log to the console?
-    public var verbose = true
-    
+
+    //Private Properties
     private let bluetoothManager:CBCentralManager!
-    
-    var connectionMode = ConnectionMode.None
-    var connectionStatus:ConnectionStatus = ConnectionStatus.Disconnected {
-        didSet {
-            switch connectionStatus {
-                case .Connected:
-                    if let connectionCallback = self.connectionCallback {
-                        connectionCallback()
-                    }
-                default:
-                    if let disconnectionCallback = self.disconnectionCallback {
-                        disconnectionCallback()
-                    }
-            }
-        }
-    }
-    
-    var currentPeripheral: UARTPeripheral? {
+    private var currentPeripheral: UARTPeripheral? {
         didSet {
             if let p = currentPeripheral {
                 p.verbose = self.verbose
@@ -55,38 +45,61 @@ class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
         }
     }
     
-    //callbacks
-    var connectionCallback:(()->())?
-    var disconnectionCallback:(()->())?
-    var dataCallback:((string:String, data:NSData)->())?
+    //Public Properties
+    public var verbose = false
+    public var autoConnect = true
+    public private(set) var connectionMode = ConnectionMode.None
+    public private(set) var connectionStatus:ConnectionStatus = ConnectionStatus.Disconnected {
+        didSet {
+            if connectionStatus != oldValue {
+                switch connectionStatus {
+                    case .Connected:
+                        if let connectionCallback = self.connectionCallback {
+                            connectionCallback()
+                        }
+                    default:
+                        if let disconnectionCallback = self.disconnectionCallback {
+                            disconnectionCallback()
+                        }
+                }
+            }
+        }
+    }
 
-    class var sharedInstance : NRFManager {
+    //callbacks
+    public var connectionCallback:(()->())?
+    public var disconnectionCallback:(()->())?
+    public var dataCallback:((string:String, data:NSData)->())?
+    
+    
+    
+
+    public class var sharedInstance : NRFManager {
         struct Static {
             static let instance : NRFManager = NRFManager()
         }
         return Static.instance
     }
  
-    init()
+    public init(onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((string:String, data:NSData)->())? = nil, autoConnect:Bool = true)
     {
         super.init()
+        
+        self.autoConnect = autoConnect
         bluetoothManager = CBCentralManager(delegate: self, queue: nil)
-    }
-    
-    convenience init(onConnect connectionCallback:(()->())?, onDisconnect disconnectionCallback:(()->())?, onData dataCallback:((string:String, data:NSData)->())?)
-    {
-        self.init()
         self.connectionCallback = connectionCallback
         self.disconnectionCallback = disconnectionCallback
         self.dataCallback = dataCallback
     }
+    
+
     
 }
 
 // MARK: - Private Methods
 extension NRFManager {
     
-    private func scanForPeripherals()
+    private func scanForPeripheral()
     {
         let connectedPeripherals = bluetoothManager.retrieveConnectedPeripheralsWithServices([UARTPeripheral.uartServiceUUID()])
 
@@ -109,13 +122,6 @@ extension NRFManager {
         bluetoothManager.connectPeripheral(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey:false])
     }
     
-    private func peripheralDidDisconnect()
-    {
-        log("Peripheral Disconnected.")
-        disconnect()
-        connect()
-    }
-    
     private func alertBluetoothPowerOff() {
         log("Bluetooth disabled");
         disconnect()
@@ -127,7 +133,7 @@ extension NRFManager {
 
     private func log(logMessage: String) {
         if (verbose) {
-            println(logMessage)
+            println("NRFManager: \(logMessage)")
         }
     }
 }
@@ -136,18 +142,22 @@ extension NRFManager {
 extension NRFManager {
     
     public func connect() {
-        log("Connect!")
+        if currentPeripheral != nil && connectionStatus == .Connected {
+            log("Asked to connect, but already connected!")
+            return
+        }
         
-        scanForPeripherals()
+        scanForPeripheral()
     }
     
     public func disconnect()
     {
+        if currentPeripheral == nil {
+            log("Asked to disconnect, but no current connection!")
+            return
+        }
+        
         log("Disconnect ...")
-        
-        connectionStatus = ConnectionStatus.Disconnected
-        connectionMode = ConnectionMode.None
-        
         bluetoothManager.cancelPeripheralConnection(currentPeripheral?.peripheral)
     }
     
@@ -159,6 +169,7 @@ extension NRFManager {
                 return true
             }
         }
+        log("Can't send string. No connection!")
         return false
     }
     
@@ -170,6 +181,7 @@ extension NRFManager {
                 return true
             }
         }
+        log("Can't send data. No connection!")
         return false
     }
 
@@ -178,13 +190,15 @@ extension NRFManager {
 // MARK: - CBCentralManagerDelegate Methods
 extension NRFManager {
 
-        func centralManagerDidUpdateState(central: CBCentralManager!)
+        public func centralManagerDidUpdateState(central: CBCentralManager!)
         {
             log("Central Manager Did UpdateState")
             if central.state == .PoweredOn {
                 //respond to powered on
                 log("Powered on!")
-                scanForPeripherals()
+                if (autoConnect) {
+                    connect()
+                }
                 
             } else if central.state == .PoweredOff {
                 log("Powered off!")
@@ -193,14 +207,14 @@ extension NRFManager {
             }
         }
     
-        func centralManager(central: CBCentralManager!, didDiscoverPeripheral peripheral: CBPeripheral!, advertisementData: [NSObject : AnyObject]!, RSSI: NSNumber!)
+        public func centralManager(central: CBCentralManager!, didDiscoverPeripheral peripheral: CBPeripheral!, advertisementData: [NSObject : AnyObject]!, RSSI: NSNumber!)
         {
             log("Did discover peripheral: \(peripheral.name)")
             bluetoothManager.stopScan()
             connectPeripheral(peripheral)
         }
     
-        func centralManager(central: CBCentralManager!, didConnectPeripheral peripheral: CBPeripheral!)
+        public func centralManager(central: CBCentralManager!, didConnectPeripheral peripheral: CBPeripheral!)
         {
             log("Did Connect Peripheral")
             if currentPeripheral?.peripheral.isEqual(peripheral) {
@@ -214,12 +228,18 @@ extension NRFManager {
             }
         }
     
-        func centralManager(central: CBCentralManager!, didDisconnectPeripheral peripheral: CBPeripheral!, error: NSError!)
+        public func centralManager(central: CBCentralManager!, didDisconnectPeripheral peripheral: CBPeripheral!, error: NSError!)
         {
-            log("Did disconnect peripheral: \(peripheral.name)")
-            peripheralDidDisconnect()
+            log("Peripheral Disconnected: \(peripheral.name)")
+            
             if currentPeripheral?.peripheral.isEqual(peripheral) {
-                currentPeripheral?.didDisconnect()
+                connectionStatus = ConnectionStatus.Disconnected
+                connectionMode = ConnectionMode.None
+                currentPeripheral = nil
+            }
+            
+            if autoConnect {
+                connect()
             }
         }
     
@@ -232,7 +252,7 @@ extension NRFManager {
 // MARK: - UARTPeripheralDelegate Methods
 extension NRFManager {
     
-    func didReceiveData(newData:NSData)
+    public func didReceiveData(newData:NSData)
     {
         if connectionStatus == .Connected || connectionStatus == .Scanning {
             log("Data: \(newData)");
@@ -246,15 +266,213 @@ extension NRFManager {
             
         }
     }
-    func didReadHardwareRevisionString(string:String)
+    
+    public func didReadHardwareRevisionString(string:String)
     {
         log("HW Revision: \(string)")
         connectionStatus = .Connected
     }
     
-    func uartDidEncounterError(error:String)
+    public func uartDidEncounterError(error:String)
     {
         log("Error: error")
     }
     
 }
+
+
+
+/*!
+*  @class UARTPeripheral
+*
+*  @discussion The peripheral object used by NRFManager.
+*
+*/
+
+// MARK: UARTPeripheral Initialization
+private class UARTPeripheral:NSObject, CBPeripheralDelegate {
+    
+    private var peripheral:CBPeripheral
+    private var uartService:CBService?
+    private var rxCharacteristic:CBCharacteristic?
+    private var txCharacteristic:CBCharacteristic?
+    
+    private var delegate:UARTPeripheralDelegate
+    public var verbose = false
+    
+    private init(peripheral:CBPeripheral, delegate:UARTPeripheralDelegate)
+    {
+        
+        self.peripheral = peripheral
+        self.delegate = delegate
+        
+        super.init()
+        
+        self.peripheral.delegate = self
+    }
+}
+
+// MARK: Private Methods
+extension UARTPeripheral {
+    
+    private func compareID(firstID:CBUUID, toID secondID:CBUUID)->Bool {
+        return firstID.UUIDString == secondID.UUIDString
+        
+    }
+    
+    private func setupPeripheralForUse(peripheral:CBPeripheral)
+    {
+        log("Set up peripheral for use");
+        for s:CBService in peripheral.services as [CBService] {
+            for c:CBCharacteristic in s.characteristics as [CBCharacteristic] {
+                if compareID(c.UUID, toID: UARTPeripheral.rxCharacteristicsUUID()) {
+                    log("Found RX Characteristics")
+                    rxCharacteristic = c
+                    peripheral.setNotifyValue(true, forCharacteristic: rxCharacteristic)
+                } else if compareID(c.UUID, toID: UARTPeripheral.txCharacteristicsUUID()) {
+                    log("Found TX Characteristics")
+                    txCharacteristic = c
+                } else if compareID(c.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()) {
+                    log("Found Hardware Revision String characteristic")
+                    peripheral.readValueForCharacteristic(c)
+                }
+            }
+        }
+    }
+    
+    private func log(logMessage: String) {
+        if (verbose) {
+            println("UARTPeripheral: \(logMessage)")
+        }
+    }
+}
+
+// MARK: Public Methods
+extension UARTPeripheral {
+    public func didConnect()
+    {
+        log("Did connect")
+        if peripheral.services {
+            log("Skipping service discovery for: \(peripheral.name)")
+            peripheral(peripheral, didDiscoverServices: nil)
+            return
+        }
+        
+        log("Start service discovery: \(peripheral.name)")
+        peripheral.discoverServices([UARTPeripheral.uartServiceUUID(), UARTPeripheral.deviceInformationServiceUUID()])
+    }
+    
+    public func writeString(string:String)
+    {
+        log("Write string: \(string)")
+        let data = NSData(bytes: string, length: countElements(string))
+        writeRawData(data)
+    }
+    
+    public func writeRawData(data:NSData)
+    {
+        log("Write data: \(data)")
+        
+        if let txCharacteristic = self.txCharacteristic {
+            if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.WriteWithoutResponse.getLogicValue()) != 0 {
+                peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithoutResponse)
+            } else if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.Write.getLogicValue()) != 0  {
+                peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
+            } else {
+                log("No write property on TX characteristics: \(txCharacteristic.properties)")
+            }
+        }
+    }
+}
+
+// MARK: CBPeripheral Delegate methods
+extension UARTPeripheral {
+    public func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
+        if !error {
+            for s:CBService in peripheral.services as [CBService] {
+                if s.characteristics {
+                    var e = NSError()
+                    //peripheral(peripheral, didDiscoverCharacteristicsForService: s, error: e)
+                } else if compareID(s.UUID, toID: UARTPeripheral.uartServiceUUID()) {
+                    log("Found correct service")
+                    uartService = s
+                    peripheral.discoverCharacteristics([UARTPeripheral.txCharacteristicsUUID(),UARTPeripheral.rxCharacteristicsUUID()], forService: uartService)
+                } else if compareID(s.UUID, toID: UARTPeripheral.deviceInformationServiceUUID()) {
+                    peripheral.discoverCharacteristics([UARTPeripheral.hardwareRevisionStringUUID()], forService: s)
+                }
+            }
+        } else {
+            log("Error discovering characteristics: \(error)")
+            delegate.uartDidEncounterError("Error discovering services")
+            return
+        }
+    }
+    
+    public func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
+    {
+        if !error {
+            log("Did Discover Characteristics For Service: \(service.description)")
+            let services:[CBService] = peripheral.services as [CBService]
+            let s = services[services.count - 1]
+            if compareID(service.UUID, toID: s.UUID) {
+                setupPeripheralForUse(peripheral)
+            }
+        } else {
+            log("Error discovering characteristics: \(error)")
+            delegate.uartDidEncounterError("Error discovering characteristics")
+            return
+        }
+    }
+    
+    public func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
+    {
+        log("Did Update Value For Characteristic")
+        if !error {
+            if characteristic == rxCharacteristic {
+                log("Recieved: \(characteristic.value)")
+                delegate.didReceiveData(characteristic.value)
+            } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()){
+                log("Did read hardware revision string")
+                // FIX ME: This is not how the original thing worked.
+                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding))
+            }
+        } else {
+            log("Error receiving notification for characteristic: \(error)")
+            delegate.uartDidEncounterError("Error receiving notification for characteristic")
+            return
+        }
+    }
+}
+
+// MARK: Class Methods
+extension UARTPeripheral {
+    class func uartServiceUUID() -> CBUUID {
+        return CBUUID.UUIDWithString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
+    }
+    
+    class func txCharacteristicsUUID() -> CBUUID {
+        return CBUUID.UUIDWithString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+    }
+    
+    class func rxCharacteristicsUUID() -> CBUUID {
+        return CBUUID.UUIDWithString("6e400003-b5a3-f393-e0a9-e50e24dcca9e")
+    }
+    
+    class func deviceInformationServiceUUID() -> CBUUID{
+        return CBUUID.UUIDWithString("180A")
+    }
+    
+    class func hardwareRevisionStringUUID() -> CBUUID{
+        return CBUUID.UUIDWithString("2A27")
+    }
+}
+
+// MARK: UARTPeripheralDelegate Definition
+private protocol UARTPeripheralDelegate {
+    func didReceiveData(newData:NSData)
+    func didReadHardwareRevisionString(string:String)
+    func uartDidEncounterError(error:String)
+}
+
+
+
