@@ -10,7 +10,6 @@ import Foundation
 import CoreBluetooth
 
 
-
 enum ConnectionMode {
     case None
     case PinIO
@@ -24,15 +23,14 @@ enum ConnectionStatus {
 }
 
 
-
-
+// Mark: Initialization
 class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
     
+    // Should we log to the console?
+    public var verbose = true
     
+    private let bluetoothManager:CBCentralManager!
     
-    
-    
-    let bluetoothManager:CBCentralManager!
     var connectionMode = ConnectionMode.None
     var connectionStatus:ConnectionStatus = ConnectionStatus.Disconnected {
         didSet {
@@ -48,26 +46,29 @@ class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
             }
         }
     }
-    var currentPeripheral: UARTPeripheral?
     
+    var currentPeripheral: UARTPeripheral? {
+        didSet {
+            if let p = currentPeripheral {
+                p.verbose = self.verbose
+            }
+        }
+    }
     
     //callbacks
     var connectionCallback:(()->())?
     var disconnectionCallback:(()->())?
     var dataCallback:((string:String, data:NSData)->())?
 
-    
     class var sharedInstance : NRFManager {
-    struct Static {
-        static let instance : NRFManager = NRFManager()
+        struct Static {
+            static let instance : NRFManager = NRFManager()
         }
         return Static.instance
     }
  
     init()
     {
-        
-        
         super.init()
         bluetoothManager = CBCentralManager(delegate: self, queue: nil)
     }
@@ -80,67 +81,76 @@ class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
         self.dataCallback = dataCallback
     }
     
-    func scanForPeripherals()
+}
+
+// MARK: - Private Methods
+extension NRFManager {
+    
+    private func scanForPeripherals()
     {
         let connectedPeripherals = bluetoothManager.retrieveConnectedPeripheralsWithServices([UARTPeripheral.uartServiceUUID()])
-        
-        println(connectedPeripherals)
+
         if connectedPeripherals.count > 0 {
-            println("Already connected ...")
+            log("Already connected ...")
             connectPeripheral(connectedPeripherals[0] as CBPeripheral)
         } else {
-            println("Scan for Peripherials")
-            
+            log("Scan for Peripherials")
             bluetoothManager.scanForPeripheralsWithServices([UARTPeripheral.uartServiceUUID()], options: [CBCentralManagerScanOptionAllowDuplicatesKey:false])
         }
     }
     
-    func connectPeripheral(peripheral:CBPeripheral) {
-        println("Connect to Peripheral: \(peripheral)")
+    private func connectPeripheral(peripheral:CBPeripheral) {
+        log("Connect to Peripheral: \(peripheral)")
         
-        //clear pending connections
         bluetoothManager.cancelPeripheralConnection(peripheral)
         
-        //connect
         currentPeripheral = UARTPeripheral(peripheral: peripheral, delegate: self)
         
         bluetoothManager.connectPeripheral(peripheral, options: [CBConnectPeripheralOptionNotifyOnDisconnectionKey:false])
     }
     
-    func disconnect()
+    private func peripheralDidDisconnect()
     {
-        println("Disconnected ...")
-    
-        connectionStatus = ConnectionStatus.Disconnected
-        connectionMode = ConnectionMode.None
-        
-        bluetoothManager.cancelPeripheralConnection(currentPeripheral?.peripheral)
-        
-        scanForPeripherals()
+        log("Peripheral Disconnected.")
+        disconnect()
+        connect()
     }
     
-    func peripheralDidDisconnect()
-    {
-        println("Peripheral Disconnected.")
+    private func alertBluetoothPowerOff() {
+        log("Bluetooth disabled");
         disconnect()
     }
     
-    
-    func alertBluetoothPowerOff() {
-        println("Bluetooth disabled");
-        disconnect()
-    }
-    
-    
-    func alertFailedConnection() {
-        println("Unable to connect");
+    private func alertFailedConnection() {
+        log("Unable to connect");
     }
 
-
+    private func log(logMessage: String) {
+        if (verbose) {
+            println(logMessage)
+        }
+    }
 }
 
 // MARK: - Public Methods
 extension NRFManager {
+    
+    public func connect() {
+        log("Connect!")
+        
+        scanForPeripherals()
+    }
+    
+    public func disconnect()
+    {
+        log("Disconnect ...")
+        
+        connectionStatus = ConnectionStatus.Disconnected
+        connectionMode = ConnectionMode.None
+        
+        bluetoothManager.cancelPeripheralConnection(currentPeripheral?.peripheral)
+    }
+    
     public func writeString(string:String) -> Bool
     {
         if let currentPeripheral = self.currentPeripheral {
@@ -162,63 +172,56 @@ extension NRFManager {
         }
         return false
     }
-    
-}
 
+}
 
 // MARK: - CBCentralManagerDelegate Methods
 extension NRFManager {
 
-    
         func centralManagerDidUpdateState(central: CBCentralManager!)
         {
-            println("Central Manager Did UpdateState")
+            log("Central Manager Did UpdateState")
             if central.state == .PoweredOn {
                 //respond to powered on
-                println("Powered on!")
+                log("Powered on!")
                 scanForPeripherals()
                 
             } else if central.state == .PoweredOff {
-                println("Powered off!")
+                log("Powered off!")
                 connectionStatus = ConnectionStatus.Disconnected
                 connectionMode = ConnectionMode.None
             }
         }
     
-
-    
         func centralManager(central: CBCentralManager!, didDiscoverPeripheral peripheral: CBPeripheral!, advertisementData: [NSObject : AnyObject]!, RSSI: NSNumber!)
         {
-            println("Did discover peripheral: \(peripheral.name)")
+            log("Did discover peripheral: \(peripheral.name)")
             bluetoothManager.stopScan()
             connectPeripheral(peripheral)
         }
     
         func centralManager(central: CBCentralManager!, didConnectPeripheral peripheral: CBPeripheral!)
         {
-            println("Did Connect Peripheral")
+            log("Did Connect Peripheral")
             if currentPeripheral?.peripheral.isEqual(peripheral) {
                 if (peripheral.services) {
-                    println("Did connect to existing peripheral: \(peripheral.name)")
+                    log("Did connect to existing peripheral: \(peripheral.name)")
                     currentPeripheral?.peripheral(peripheral, didDiscoverServices: nil)
                 } else {
-                    println("Did connect peripheral: \(peripheral.name)")
+                    log("Did connect peripheral: \(peripheral.name)")
                     currentPeripheral?.didConnect()
                 }
             }
         }
     
-
-    
         func centralManager(central: CBCentralManager!, didDisconnectPeripheral peripheral: CBPeripheral!, error: NSError!)
         {
-            println("Did disconnect peripheral: \(peripheral.name)")
+            log("Did disconnect peripheral: \(peripheral.name)")
             peripheralDidDisconnect()
             if currentPeripheral?.peripheral.isEqual(peripheral) {
                 currentPeripheral?.didDisconnect()
             }
         }
-    
     
         //optional func centralManager(central: CBCentralManager!, willRestoreState dict: [NSObject : AnyObject]!)
         //optional func centralManager(central: CBCentralManager!, didRetrievePeripherals peripherals: [AnyObject]!)
@@ -226,17 +229,16 @@ extension NRFManager {
         //optional func centralManager(central: CBCentralManager!, didFailToConnectPeripheral peripheral: CBPeripheral!, error: NSError!)
 }
 
-
 // MARK: - UARTPeripheralDelegate Methods
 extension NRFManager {
     
     func didReceiveData(newData:NSData)
     {
         if connectionStatus == .Connected || connectionStatus == .Scanning {
-            println("Data: \(newData)");
+            log("Data: \(newData)");
             
             let string = NSString(data: newData, encoding:NSUTF8StringEncoding)
-            println("String: \(string)")
+            log("String: \(string)")
             
             if let dataCallback = self.dataCallback {
                 dataCallback(string: string, data: newData)
@@ -246,15 +248,13 @@ extension NRFManager {
     }
     func didReadHardwareRevisionString(string:String)
     {
-        println("HW Revision: \(string)")
+        log("HW Revision: \(string)")
         connectionStatus = .Connected
     }
     
-    
     func uartDidEncounterError(error:String)
     {
-        println("Error: error")
+        log("Error: error")
     }
-    
     
 }

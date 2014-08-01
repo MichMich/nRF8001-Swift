@@ -14,6 +14,9 @@ import CoreBluetooth
 
 class UARTPeripheral:NSObject, CBPeripheralDelegate {
     
+    public var verbose = false
+
+    
     var peripheral:CBPeripheral
     var delegate:UARTPeripheralDelegate
     
@@ -34,32 +37,32 @@ class UARTPeripheral:NSObject, CBPeripheralDelegate {
     
     func didConnect()
     {
-        println("Did connect")
+        log("Did connect")
         if peripheral.services {
-            println("Skipping service discovery for: \(peripheral.name)")
+            log("Skipping service discovery for: \(peripheral.name)")
             peripheral(peripheral, didDiscoverServices: nil)
             return
         }
         
-        println("Start service discovery: \(peripheral.name)")
+        log("Start service discovery: \(peripheral.name)")
         peripheral.discoverServices([UARTPeripheral.uartServiceUUID(), UARTPeripheral.deviceInformationServiceUUID()])
     }
     
     func didDisconnect()
     {
-        println("Peripheral disconnected")
+        log("Peripheral disconnected")
     }
     
     func writeString(string:String)
     {
-        println("Write string: \(string)")
+        log("Write string: \(string)")
         let data = NSData(bytes: string, length: countElements(string))
         writeRawData(data)
     }
     
     func writeRawData(data:NSData)
     {
-        println("Write data: \(data)")
+        log("Write data: \(data)")
         
         if let txCharacteristic = self.txCharacteristic {
             if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.WriteWithoutResponse.getLogicValue()) != 0 {
@@ -67,7 +70,7 @@ class UARTPeripheral:NSObject, CBPeripheralDelegate {
             } else if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.Write.getLogicValue()) != 0  {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
             } else {
-                println("No write property on TX characteristics: \(txCharacteristic.properties)")
+                log("No write property on TX characteristics: \(txCharacteristic.properties)")
             }
         }
     }
@@ -79,38 +82,43 @@ class UARTPeripheral:NSObject, CBPeripheralDelegate {
     
     func setupPeripheralForUse(peripheral:CBPeripheral)
     {
-        println("Set up peripheral for use");
+        log("Set up peripheral for use");
         for s:CBService in peripheral.services as [CBService] {
             for c:CBCharacteristic in s.characteristics as [CBCharacteristic] {
                 if compareID(c.UUID, toID: UARTPeripheral.rxCharacteristicsUUID()) {
-                    println("Found RX Characteristics")
+                    log("Found RX Characteristics")
                     rxCharacteristic = c
                     peripheral.setNotifyValue(true, forCharacteristic: rxCharacteristic)
                 } else if compareID(c.UUID, toID: UARTPeripheral.txCharacteristicsUUID()) {
-                    println("Found TX Characteristics")
+                    log("Found TX Characteristics")
                     txCharacteristic = c
                 } else if compareID(c.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()) {
-                    println("Found Hardware Revision String characteristic")
+                    log("Found Hardware Revision String characteristic")
                     peripheral.readValueForCharacteristic(c)
                 }
             }
         }
     }
     
+    func log(logMessage: String) {
+        if (verbose) {
+            println(logMessage)
+        }
+    }
     
 }
 
 // MARK: CBPeripheral Delegate methods
 extension UARTPeripheral {
     func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
-        println("Did Discover Services");
+        log("Did Discover Services");
         if !error {
             for s:CBService in peripheral.services as [CBService] {
                 if s.characteristics {
                     var e = NSError()
                     //peripheral(peripheral, didDiscoverCharacteristicsForService: s, error: e)
                 } else if compareID(s.UUID, toID: UARTPeripheral.uartServiceUUID()) {
-                    println("Found correct service")
+                    log("Found correct service")
                     uartService = s
                     peripheral.discoverCharacteristics([UARTPeripheral.txCharacteristicsUUID(),UARTPeripheral.rxCharacteristicsUUID()], forService: uartService)
                 } else if compareID(s.UUID, toID: UARTPeripheral.deviceInformationServiceUUID()) {
@@ -118,7 +126,7 @@ extension UARTPeripheral {
                 }
             }
         } else {
-            println("Error discovering characteristics: \(error)")
+            log("Error discovering characteristics: \(error)")
             delegate.uartDidEncounterError("Error discovering services")
             return
         }
@@ -127,7 +135,7 @@ extension UARTPeripheral {
    
     func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
     {
-        println("Did Discover Characteristics For Service")
+        log("Did Discover Characteristics For Service")
         if !error {
             let services:[CBService] = peripheral.services as [CBService]
             let s = services[services.count - 1]
@@ -135,7 +143,7 @@ extension UARTPeripheral {
                 setupPeripheralForUse(peripheral)
             }
         } else {
-            println("Error discovering characteristics: \(error)")
+            log("Error discovering characteristics: \(error)")
             delegate.uartDidEncounterError("Error discovering characteristics")
             return
         }
@@ -143,18 +151,18 @@ extension UARTPeripheral {
     
     func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
     {
-        println("Did Update Value For Characteristic")
+        log("Did Update Value For Characteristic")
         if !error {
             if characteristic == rxCharacteristic {
-                println("Recieved: \(characteristic.value)")
+                log("Recieved: \(characteristic.value)")
                 delegate.didReceiveData(characteristic.value)
             } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()){
-                println("Did read hardware revision string")
+                log("Did read hardware revision string")
                 // FIX ME: This is not how the original thing worked.
                 delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding))
             }
         } else {
-            println("Error receiving notification for characteristic: \(error)")
+            log("Error receiving notification for characteristic: \(error)")
             delegate.uartDidEncounterError("Error receiving notification for characteristic")
             return
         }
