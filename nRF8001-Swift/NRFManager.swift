@@ -48,6 +48,13 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
     //Public Properties
     public var verbose = false
     public var autoConnect = true
+    public var delegate:NRFManagerDelegate?
+
+    //callbacks
+    public var connectionCallback:(()->())?
+    public var disconnectionCallback:(()->())?
+    public var dataCallback:((data:NSData, string:String)->())?
+    
     public private(set) var connectionMode = ConnectionMode.None
     public private(set) var connectionStatus:ConnectionStatus = ConnectionStatus.Disconnected {
         didSet {
@@ -57,19 +64,22 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
                         if let connectionCallback = self.connectionCallback {
                             connectionCallback()
                         }
+                        if let nrfDidConnect = delegate?.nrfDidConnect {
+                            nrfDidConnect()
+                        }
                     default:
                         if let disconnectionCallback = self.disconnectionCallback {
                             disconnectionCallback()
+                        }
+                        if let nrfDidDisconnect = delegate?.nrfDidDisconnect {
+                            nrfDidDisconnect()
                         }
                 }
             }
         }
     }
 
-    //callbacks
-    public var connectionCallback:(()->())?
-    public var disconnectionCallback:(()->())?
-    public var dataCallback:((string:String, data:NSData)->())?
+
     
     
     
@@ -81,10 +91,10 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
         return Static.instance
     }
  
-    public init(onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((string:String, data:NSData)->())? = nil, autoConnect:Bool = true)
+    public init(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData, string:String)->())? = nil, autoConnect:Bool = true)
     {
         super.init()
-        
+        self.delegate = delegate
         self.autoConnect = autoConnect
         bluetoothManager = CBCentralManager(delegate: self, queue: nil)
         self.connectionCallback = connectionCallback
@@ -217,7 +227,7 @@ extension NRFManager {
         public func centralManager(central: CBCentralManager!, didConnectPeripheral peripheral: CBPeripheral!)
         {
             log("Did Connect Peripheral")
-            if currentPeripheral?.peripheral.isEqual(peripheral) {
+            if currentPeripheral?.peripheral == peripheral {
                 if (peripheral.services) {
                     log("Did connect to existing peripheral: \(peripheral.name)")
                     currentPeripheral?.peripheral(peripheral, didDiscoverServices: nil)
@@ -232,7 +242,7 @@ extension NRFManager {
         {
             log("Peripheral Disconnected: \(peripheral.name)")
             
-            if currentPeripheral?.peripheral.isEqual(peripheral) {
+            if currentPeripheral?.peripheral == peripheral {
                 connectionStatus = ConnectionStatus.Disconnected
                 connectionMode = ConnectionMode.None
                 currentPeripheral = nil
@@ -261,7 +271,11 @@ extension NRFManager {
             log("String: \(string)")
             
             if let dataCallback = self.dataCallback {
-                dataCallback(string: string, data: newData)
+                dataCallback(data: newData, string: string)
+            }
+            
+            if let nrfReceivedData = delegate?.nrfReceivedData {
+                nrfReceivedData(newData, string: string)
             }
             
         }
@@ -281,6 +295,13 @@ extension NRFManager {
 }
 
 
+// MARK: NRFManagerDelegate Definition
+@objc public protocol NRFManagerDelegate {
+    optional func nrfDidConnect()
+    optional func nrfDidDisconnect()
+    optional func nrfReceivedData(data:NSData, string:String)
+}
+
 
 /*!
 *  @class UARTPeripheral
@@ -298,7 +319,7 @@ private class UARTPeripheral:NSObject, CBPeripheralDelegate {
     private var txCharacteristic:CBCharacteristic?
     
     private var delegate:UARTPeripheralDelegate
-    public var verbose = false
+    private var verbose = false
     
     private init(peripheral:CBPeripheral, delegate:UARTPeripheralDelegate)
     {
@@ -349,7 +370,7 @@ extension UARTPeripheral {
 
 // MARK: Public Methods
 extension UARTPeripheral {
-    public func didConnect()
+    private func didConnect()
     {
         log("Did connect")
         if peripheral.services {
@@ -362,32 +383,34 @@ extension UARTPeripheral {
         peripheral.discoverServices([UARTPeripheral.uartServiceUUID(), UARTPeripheral.deviceInformationServiceUUID()])
     }
     
-    public func writeString(string:String)
+    private func writeString(string:String)
     {
         log("Write string: \(string)")
         let data = NSData(bytes: string, length: countElements(string))
         writeRawData(data)
     }
     
-    public func writeRawData(data:NSData)
+    private func writeRawData(data:NSData)
     {
         log("Write data: \(data)")
         
         if let txCharacteristic = self.txCharacteristic {
-            if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.WriteWithoutResponse.getLogicValue()) != 0 {
+            
+            if txCharacteristic.properties & .WriteWithoutResponse {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithoutResponse)
-            } else if (txCharacteristic.properties.getLogicValue() & CBCharacteristicProperties.Write.getLogicValue()) != 0  {
+            } else if txCharacteristic.properties & .Write {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
             } else {
                 log("No write property on TX characteristics: \(txCharacteristic.properties)")
             }
+            
         }
     }
 }
 
 // MARK: CBPeripheral Delegate methods
 extension UARTPeripheral {
-    public func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
+    private func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
         if !error {
             for s:CBService in peripheral.services as [CBService] {
                 if s.characteristics {
@@ -408,7 +431,7 @@ extension UARTPeripheral {
         }
     }
     
-    public func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
+    private func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
     {
         if !error {
             log("Did Discover Characteristics For Service: \(service.description)")
@@ -424,7 +447,7 @@ extension UARTPeripheral {
         }
     }
     
-    public func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
+   private func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
     {
         log("Did Update Value For Characteristic")
         if !error {

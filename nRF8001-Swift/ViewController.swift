@@ -8,7 +8,7 @@
 
 import UIKit
 
-class ViewController: UIViewController {
+class ViewController: UIViewController, NRFManagerDelegate {
     
     var nrfManager:NRFManager!
     var feedbackView = UITextView()
@@ -18,19 +18,20 @@ class ViewController: UIViewController {
 
         nrfManager = NRFManager(
             onConnect: {
-                self.log("★ Connected")
+                self.log("C: ★ Connected")
             },
             onDisconnect: {
-                self.log("★ Disconnected")
+                self.log("C: ★ Disconnected")
             },
             onData: {
-                (string:String, data:NSData)->() in
-                self.log("⬇ Recieved data - String: \(string) - Data: \(data)")
+                (data:NSData, string:String)->() in
+                self.log("C: ⬇ Recieved data - String: \(string) - Data: \(data)")
             },
             autoConnect: false
         )
 
         nrfManager.verbose = true
+        nrfManager.delegate = self
 
         setupUI()
     }
@@ -41,7 +42,28 @@ class ViewController: UIViewController {
         let result = self.nrfManager.writeString(string)
         log("⬆ Sent string: \(string) - Result: \(result)")
     }
+}
+
+// MARK: - NRFManagerDelegate Methods
+extension ViewController
+{
+    func nrfDidConnect()
+    {
+        self.log("D: ★ Connected")
+    }
     
+    func nrfDidDisconnect()
+    {
+        self.log("D: ★ Disconnected")
+    }
+    
+    func nrfReceivedData(data: NSData, string: String) {
+        self.log("D: ⬇ Recieved data - String: \(string) - Data: \(data)")
+    }
+}
+
+// MARK: - Various stuff
+extension ViewController {
     func setupUI()
     {
         view.addSubview(feedbackView)
@@ -54,7 +76,7 @@ class ViewController: UIViewController {
         connectButton.setTitle("Connect", forState: UIControlState.Normal)
         connectButton.setTranslatesAutoresizingMaskIntoConstraints(false)
         connectButton.addTarget(nrfManager, action: "connect", forControlEvents: UIControlEvents.TouchUpInside)
-
+        
         let disconnectButton:UIButton = UIButton.buttonWithType(UIButtonType.System) as UIButton
         view.addSubview(disconnectButton)
         disconnectButton.setTitle("Disconnect", forState: UIControlState.Normal)
@@ -66,13 +88,13 @@ class ViewController: UIViewController {
         sendButton.setTitle("Send Data", forState: UIControlState.Normal)
         sendButton.setTranslatesAutoresizingMaskIntoConstraints(false)
         sendButton.addTarget(self, action: "sendData", forControlEvents: UIControlEvents.TouchUpInside)
-
-
+        
+        
         view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-[f]-|", options: nil, metrics: nil, views: ["f":feedbackView]))
         view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-[c]-|", options: nil, metrics: nil, views: ["c":connectButton]))
         view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-[d]-|", options: nil, metrics: nil, views: ["d":disconnectButton]))
         view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("H:|-[s]-|", options: nil, metrics: nil, views: ["s":sendButton]))
-        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|-[f]-[c]-[d]-[s]-|", options: nil, metrics: nil, views: ["f":feedbackView,"c":connectButton,"d":disconnectButton,"s":sendButton]))
+        view.addConstraints(NSLayoutConstraint.constraintsWithVisualFormat("V:|-20-[f]-[c]-[d]-[s]-20-|", options: nil, metrics: nil, views: ["f":feedbackView,"c":connectButton,"d":disconnectButton,"s":sendButton]))
     }
     
     func log(string:String)
@@ -81,6 +103,6 @@ class ViewController: UIViewController {
         feedbackView.text = feedbackView.text + "\(string)\n"
         feedbackView.scrollRangeToVisible(NSMakeRange(countElements(feedbackView.text as String), 1))
     }
-
+    
 }
 
