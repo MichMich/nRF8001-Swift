@@ -45,26 +45,28 @@ let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connec
 - The **autoConnect** argument will tell the manager if it has to start searching and connect right away, and if it has to reconnect when the connection is lost. Default is `true`.
 
 ###Initialization examples:
-	// basic object which won't connect
-	let nrfBasicExample = NRFManager(autoConnect:false)
 
-	// using delegates
-	let nrfDelegateExample = NRFManager(delegate:self)
+```Swift
+// basic object which won't connect
+let nrfBasicExample = NRFManager(autoConnect:false)
 
-	// using closures
-	let nrfClosureExample = NRFManager(
-       onConnect: {
-           println("Connected")
-       },
-       onDisconnect: {
-           println("Disconnected")
-       },
-       onData: {
-           (data:NSData, string:String)->() in
-           println("Recieved data - String: \(string) - Data: \(data)")
-       }
-	)
+// using delegates
+let nrfDelegateExample = NRFManager(delegate:self)
 
+// using closures
+let nrfClosureExample = NRFManager(
+  onConnect: {
+      println("Connected")
+  },
+  onDisconnect: {
+      println("Disconnected")
+  },
+  onData: {
+      (data:NSData, string:String)->() in
+      println("Recieved data - String: \(string) - Data: \(data)")
+  }
+)
+```
 
 After initialization, it's possible to (re)set the following properties:
 
@@ -117,70 +119,73 @@ All closures and delegate methods are optional.
 Okay okay, you lazy ass ... Here you go!
 
 Using closures:
+
+```Swift	
+class ViewController: UIViewController {
+
+	var nrfManager:NRFManager!
 	
-	class ViewController: UIViewController {
+	override func viewDidLoad() 
+	{
+		super.viewDidLoad()
 
-		var nrfManager:NRFManager!
-		
-		override func viewDidLoad() 
-		{
-			super.viewDidLoad()
-
-			nrfManager = NRFManager(
-			  onConnect: {
-			      	println("Connected")
-					self.sendData()
-			  },
-			  onDisconnect: {
-			      	println("Disconnected")
-			  },
-			  onData: {
-			      	(data:NSData, string:String)->() in
-			      	println("Received data - String: \(string) - Data: \(data)")
-			  }
-			)
-		}
-
-		func sendData()
-		{
-			let result = self.nrfManager.writeString("Hello, world!")
-		}
+		nrfManager = NRFManager(
+		  onConnect: {
+		      	println("Connected")
+				self.sendData()
+		  },
+		  onDisconnect: {
+		      	println("Disconnected")
+		  },
+		  onData: {
+		      	(data:NSData, string:String)->() in
+		      	println("Received data - String: \(string) - Data: \(data)")
+		  }
+		)
 	}
- 
+
+	func sendData()
+	{
+		let result = self.nrfManager.writeString("Hello, world!")
+	}
+}
+``` 
 Using delegates:
 
-	class ViewController: UIViewController, NRFManagerDelegate {
+```Swift
+class ViewController: UIViewController, NRFManagerDelegate {
 
-		var nrfManager:NRFManager!
-		
-		override func viewDidLoad() 
-		{
-			super.viewDidLoad()
-			nrfManager = NRFManager(delegate:self)
-		}
-
-		func sendData()
-		{
-			let result = self.nrfManager.writeString("Hello, world!")
-		}
-
-		// NRFManagerDelegate methods
-
-		func nrfDidConnect(nrfManager:NRFManager)
-		{
-			println("Connected")
-			self.sendData()
-		}
-		    
-		func nrfDidDisconnect(nrfManager:NRFManager)
-		{
-			println("Disconnected")
-		}
-		    
-		func nrfReceivedData(nrfManager:NRFManager, data: NSData, string: String) {
-			println("Received data - String: \(string) - Data: \(data)")
-		}
+	var nrfManager:NRFManager!
+	
+	override func viewDidLoad() 
+	{
+		super.viewDidLoad()
+		nrfManager = NRFManager(delegate:self)
 	}
+
+	func sendData()
+	{
+		let result = self.nrfManager.writeString("Hello, world!")
+	}
+
+	// NRFManagerDelegate methods
+
+	func nrfDidConnect(nrfManager:NRFManager)
+	{
+		println("Connected")
+		self.sendData()
+	}
+	    
+	func nrfDidDisconnect(nrfManager:NRFManager)
+	{
+		println("Disconnected")
+	}
+	    
+	func nrfReceivedData(nrfManager:NRFManager, data: NSData, string: String) {
+		println("Received data - String: \(string) - Data: \(data)")
+	}
+}
+```
 
 ## Yeah, cool! But how do I connect my Bluefruit Breakout Board?
 
