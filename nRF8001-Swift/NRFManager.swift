@@ -65,14 +65,14 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
                             connectionCallback()
                         }
                         if let nrfDidConnect = delegate?.nrfDidConnect {
-                            nrfDidConnect()
+                            nrfDidConnect(self)
                         }
                     default:
                         if let disconnectionCallback = self.disconnectionCallback {
                             disconnectionCallback()
                         }
                         if let nrfDidDisconnect = delegate?.nrfDidDisconnect {
-                            nrfDidDisconnect()
+                            nrfDidDisconnect(self)
                         }
                 }
             }
@@ -101,8 +101,6 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
         self.disconnectionCallback = disconnectionCallback
         self.dataCallback = dataCallback
     }
-    
-
     
 }
 
@@ -275,7 +273,7 @@ extension NRFManager {
             }
             
             if let nrfReceivedData = delegate?.nrfReceivedData {
-                nrfReceivedData(newData, string: string)
+                nrfReceivedData(self, data:newData, string: string)
             }
             
         }
@@ -297,9 +295,9 @@ extension NRFManager {
 
 // MARK: NRFManagerDelegate Definition
 @objc public protocol NRFManagerDelegate {
-    optional func nrfDidConnect()
-    optional func nrfDidDisconnect()
-    optional func nrfReceivedData(data:NSData, string:String)
+    optional func nrfDidConnect(nrfManager:NRFManager)
+    optional func nrfDidDisconnect(nrfManager:NRFManager)
+    optional func nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)
 }
 
 
