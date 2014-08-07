@@ -18,16 +18,21 @@ Add the [NRFManager.swift](https://github.com/MichMich/nRF8001-Swift/blob/master
 
 Use the shared instance:
 
-
-	let nrfManager = NRFManager.sharedInstance
+```Swift
+let nrfManager = NRFManager.sharedInstance
+```
 
 Or simply create an instance yourself:
 
-	let nrfManager = NRFManager()
+```Swift
+let nrfManager = NRFManager()
+```
 
 The Initializer takes 5 arguments. All of these arguments are optional and can be nil:
 
-	let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData, string:String)->())? = nil, autoConnect:Bool = true)
+```Swift
+let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData, string:String)->())? = nil, autoConnect:Bool = true)
+```
 
 - The **delegate** argument sets the delegate for the NRFManager instance. The delegate must conform to the `NRFManagerDelegate`. Default is `nil`.
 
