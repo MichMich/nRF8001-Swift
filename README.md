@@ -3,7 +3,7 @@ nRF8001-Swift
 
 **nRF8001-Swift** was written by **[Michael Teeuw](https://twitter.com/michmich)**
 
-## What is it?
+# What is it?
 While working on one of my Arduino projects, I was in the need for a simple wrapper for communication with the [Adafruit Bluefruit LE nRF8001 Breakout](https://www.adafruit.com/products/1697).
 
 Since I was unable to find one (especially one that was Swift-ready) I wrote a Swift-wrapper myself. It is based on a [Bluefruit LE Connect](https://github.com/adafruit/Bluefruit_LE_Connect).
@@ -11,10 +11,12 @@ Since I was unable to find one (especially one that was Swift-ready) I wrote a S
 It has all the basic needs for basic two way communication and is easy to implement.
 
 ![Bluefruit LE nRF8001 Breakout](https://www.adafruit.com/images/970x728/1697-04.jpg)
-*Image Courtesy of [Adafruit](https://www.adafruit.com/products/1697)*
+*Image Courtesy of [Adafruit](https://www.adafruit.com/products/1697).*
 
-## How to use
+# How to use
 Add the [NRFManager.swift](https://github.com/MichMich/nRF8001-Swift/blob/master/nRF8001-Swift/NRFManager.swift) file to your project and use the following implementation:
+
+##Initialization
 
 Use the shared instance:
 
@@ -68,6 +70,7 @@ let nrfClosureExample = NRFManager(
 )
 ```
 
+###Properties
 After initialization, it's possible to (re)set the following properties:
 
 - `nrfManager.delegate` to set the delegate.
@@ -91,22 +94,43 @@ Additionally, the following properties are read-only:
 ## Instance methods
 A NRFManager can receive the following method calls:
 
-- `nrfManager.connect()` to start looking for a connection. Only necessary when `autoConnect` is set to `false`.
+```Swift
+nrfManager.connect()
+```
+Start looking for a connection. Only necessary when `autoConnect` is set to `false`.
 
-- `nrfManager.disconnect()` to disconnect from the nRF8001 device. Note that when `autoConnect` is set to `true`, the NRFManager will be an annoying prick and start looking for an new connection instantly ... 
+```Swift
+nrfManager.disconnect() 
+```
+Disconnect from the nRF8001 device. Note that when `autoConnect` is set to `true`, the NRFManager will be an annoying prick and start looking for an new connection instantly ... 
 
-- `nrfManager.writeString(string:String) -> Bool` to send a String to the nRF8001 device. It will return a Bool to tell you if it was possible to send it. (If there is no current connection, this will return `false` in all other cases this will return `true`.)
+```Swift
+nrfManager.writeString(string:String) -> Bool
+```
+Send a String to the nRF8001 device. It will return a Bool to tell you if it was possible to send it. (If there is no current connection, this will return `false` in all other cases this will return `true`.)
 
-- `nrfManager.writeData(data:NSData) -> Bool` to send raw data (NSData) to the nRF8001 device. It will return a Bool to tell you if it was possible to send it. (If there is no current connection, this will return `false` in all other cases this will return `true`.)
+```Swift
+nrfManager.writeData(data:NSData) -> Bool
+```
+Send raw data (NSData) to the nRF8001 device. It will return a Bool to tell you if it was possible to send it. (If there is no current connection, this will return `false` in all other cases this will return `true`.)
 
 ## Delegate methods
 The following methods are part of the NRFManagerDelegate protocol:
 
-- `nrfDidConnect(nrfManager:NRFManager)` is called when the NRFManager connects to the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which connected.
+```Swift
+nrfDidConnect(nrfManager:NRFManager)
+```
+Called when the NRFManager connects to the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which connected.
 
-- `nrfDidDisconnect(nrfManager:NRFManager)` is called when the NRFManager disconnect from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which disconnected.
+```Swift
+nrfDidDisconnect(nrfManager:NRFManager)
+```
+Called when the NRFManager disconnect from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which disconnected.
 
-- `nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)` is called when the NRFManager receives data from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which received data. `data` will contain the raw data, `string` will contain the string representation of the received data.
+```Swift
+nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)
+```
+Called when the NRFManager receives data from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which received data. `data` will contain the raw data, `string` will contain the string representation of the received data.
 
 ## Delegates AND Closures?!
 The reason I implemented both is because I was unable to decide what the best approach is. Personally I tend to prefer the delegate route. 
@@ -186,6 +210,8 @@ class ViewController: UIViewController, NRFManagerDelegate {
 	}
 }
 ```
+
+You can check out the example project to see how it works. It includes both the delegate and closure usage.
 
 ## Yeah, cool! But how do I connect my Bluefruit Breakout Board?
 
