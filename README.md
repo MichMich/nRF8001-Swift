@@ -1,7 +1,24 @@
 nRF8001-Swift
 =============
 
-**nRF8001-Swift** was written by **[Michael Teeuw](https://twitter.com/michmich)**
+**nRF8001-Swift** was written by **[Michael Teeuw](http://michaelTeeuw.nl)** [[twitter](https://twitter.com/michmich)].
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+- [What is it?](#what-is-it)
+- [How to use](#how-to-use)
+  - [Initialization](#initialization)
+    - [Initialization examples:](#initialization-examples)
+    - [Properties](#properties)
+  - [Instance methods](#instance-methods)
+  - [Delegate methods](#delegate-methods)
+- [Delegates AND Closures?!](#delegates-and-closures!)
+- [TL;DR - Give me the most simple example!](#tldr---give-me-the-most-simple-example!)
+- [Yeah, cool! But how do I connect my Bluefruit Breakout Board?](#yeah-cool!-but-how-do-i-connect-my-bluefruit-breakout-board)
+- [Disclaimer](#disclaimer)
+- [Contributing](#contributing)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # What is it?
 While working on one of my Arduino projects, I was in the need for a simple wrapper for communication with the [Adafruit Bluefruit LE nRF8001 Breakout](https://www.adafruit.com/products/1697).
@@ -132,14 +149,14 @@ nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)
 ```
 Called when the NRFManager receives data from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which received data. `data` will contain the raw data, `string` will contain the string representation of the received data.
 
-## Delegates AND Closures?!
+# Delegates AND Closures?!
 The reason I implemented both is because I was unable to decide what the best approach is. Personally I tend to prefer the delegate route. 
 
 Although it is possible to both use the closures and the delegates, it wouldn't be the best idea to do so. That being said: Feel free to go wild! ... Both the delegate method and closure will be called when appropriate.
 
 All closures and delegate methods are optional. 
 
-## TL;DR - Give me the most simple example!
+# TL;DR - Give me the most simple example!
 Okay okay, you lazy ass ... Here you go!
 
 Using closures:
@@ -213,14 +230,14 @@ class ViewController: UIViewController, NRFManagerDelegate {
 
 You can check out the example project to see how it works. It includes both the delegate and closure usage.
 
-## Yeah, cool! But how do I connect my Bluefruit Breakout Board?
+# Yeah, cool! But how do I connect my Bluefruit Breakout Board?
 
 Check Adafruit's [awesome tutorial](https://learn.adafruit.com/getting-started-with-the-nrf8001-bluefruit-le-breakout) on how to use the Bluefruit Breakout Board. You can use the echo example sketch to test out nRF8001-Swift.
 
-## Disclaimer
+# Disclaimer
 
 This is my fist bluetooth experiment. So be gentle. ;)
 
-## Contributing
+# Contributing
 
 Forks, pull requests and other feedback are welcome.
