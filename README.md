@@ -1,3 +1,5 @@
+![Bluefruit LE nRF8001 Breakout](https://raw.githubusercontent.com/MichMich/nRF8001-Swift/master/Images/nRF8001-Swift_rounded.jpg)
+
 nRF8001-Swift
 =============
 
@@ -26,9 +28,6 @@ While working on one of my Arduino projects, I was in the need for a simple wrap
 Since I was unable to find one (especially one that was Swift-ready) I wrote a Swift-wrapper myself. It is based on a [Bluefruit LE Connect](https://github.com/adafruit/Bluefruit_LE_Connect).
 
 It has all the basic needs for basic two way communication and is easy to implement.
-
-![Bluefruit LE nRF8001 Breakout](https://www.adafruit.com/images/970x728/1697-04.jpg)
-*Image Courtesy of [Adafruit](https://www.adafruit.com/products/1697).*
 
 # How to use
 Add the [NRFManager.swift](https://github.com/MichMich/nRF8001-Swift/blob/master/nRF8001-Swift/NRFManager.swift) file to your project and use the following implementation:
@@ -241,3 +240,8 @@ This is my fist bluetooth experiment. So be gentle. ;)
 # Contributing
 
 Forks, pull requests and other feedback are welcome.
+
+
+---
+
+*Photos Courtesy of [Adafruit](https://www.adafruit.com/products/1697).*
