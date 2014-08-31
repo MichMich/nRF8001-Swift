@@ -226,7 +226,7 @@ extension NRFManager {
         {
             log("Did Connect Peripheral")
             if currentPeripheral?.peripheral == peripheral {
-                if (peripheral.services) {
+                if (peripheral.services) != nil {
                     log("Did connect to existing peripheral: \(peripheral.name)")
                     currentPeripheral?.peripheral(peripheral, didDiscoverServices: nil)
                 } else {
@@ -364,14 +364,11 @@ extension UARTPeripheral {
             println("UARTPeripheral: \(logMessage)")
         }
     }
-}
 
-// MARK: Public Methods
-extension UARTPeripheral {
     private func didConnect()
     {
         log("Did connect")
-        if peripheral.services {
+        if peripheral.services != nil {
             log("Skipping service discovery for: \(peripheral.name)")
             peripheral(peripheral, didDiscoverServices: nil)
             return
@@ -394,9 +391,9 @@ extension UARTPeripheral {
         
         if let txCharacteristic = self.txCharacteristic {
             
-            if txCharacteristic.properties & .WriteWithoutResponse {
+            if characteristic(txCharacteristic, hasProperty: .WriteWithoutResponse) {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithoutResponse)
-            } else if txCharacteristic.properties & .Write {
+            } else if characteristic(txCharacteristic, hasProperty: .Write)  {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
             } else {
                 log("No write property on TX characteristics: \(txCharacteristic.properties)")
@@ -404,14 +401,18 @@ extension UARTPeripheral {
             
         }
     }
+
+    private func characteristic(characteristics:CBCharacteristic, hasProperty property:CBCharacteristicProperties) -> Bool {
+        return (characteristics.properties.toRaw() & property.toRaw()) > 0
+    }
 }
 
 // MARK: CBPeripheral Delegate methods
 extension UARTPeripheral {
     private func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
-        if !error {
+        if error == nil {
             for s:CBService in peripheral.services as [CBService] {
-                if s.characteristics {
+                if s.characteristics != nil {
                     var e = NSError()
                     //peripheral(peripheral, didDiscoverCharacteristicsForService: s, error: e)
                 } else if compareID(s.UUID, toID: UARTPeripheral.uartServiceUUID()) {
@@ -431,7 +432,7 @@ extension UARTPeripheral {
     
     private func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
     {
-        if !error {
+        if error  == nil {
             log("Did Discover Characteristics For Service: \(service.description)")
             let services:[CBService] = peripheral.services as [CBService]
             let s = services[services.count - 1]
@@ -448,7 +449,7 @@ extension UARTPeripheral {
    private func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
     {
         log("Did Update Value For Characteristic")
-        if !error {
+        if error == nil {
             if characteristic == rxCharacteristic {
                 log("Recieved: \(characteristic.value)")
                 delegate.didReceiveData(characteristic.value)
