@@ -391,19 +391,15 @@ extension UARTPeripheral {
         
         if let txCharacteristic = self.txCharacteristic {
             
-            if characteristic(txCharacteristic, hasProperty: .WriteWithoutResponse) {
+            if txCharacteristic.properties & .WriteWithoutResponse != nil {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithoutResponse)
-            } else if characteristic(txCharacteristic, hasProperty: .Write)  {
+            } else if txCharacteristic.properties & .Write != nil {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
             } else {
                 log("No write property on TX characteristics: \(txCharacteristic.properties)")
             }
             
         }
-    }
-
-    private func characteristic(characteristics:CBCharacteristic, hasProperty property:CBCharacteristicProperties) -> Bool {
-        return (characteristics.properties.toRaw() & property.toRaw()) > 0
     }
 }
 
