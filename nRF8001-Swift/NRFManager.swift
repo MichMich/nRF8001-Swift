@@ -61,19 +61,14 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
             if connectionStatus != oldValue {
                 switch connectionStatus {
                     case .Connected:
-                        if let connectionCallback = self.connectionCallback {
-                            connectionCallback()
-                        }
-                        if let nrfDidConnect = delegate?.nrfDidConnect {
-                            nrfDidConnect(self)
-                        }
+                        
+                        connectionCallback?()
+                        delegate?.nrfDidConnect?(self)
+                    
                     default:
-                        if let disconnectionCallback = self.disconnectionCallback {
-                            disconnectionCallback()
-                        }
-                        if let nrfDidDisconnect = delegate?.nrfDidDisconnect {
-                            nrfDidDisconnect(self)
-                        }
+
+                        disconnectionCallback?()
+                        delegate?.nrfDidDisconnect?(self)
                 }
             }
         }
@@ -268,13 +263,8 @@ extension NRFManager {
             let string = NSString(data: newData, encoding:NSUTF8StringEncoding)
             log("String: \(string)")
             
-            if let dataCallback = self.dataCallback {
-                dataCallback(data: newData, string: string)
-            }
-            
-            if let nrfReceivedData = delegate?.nrfReceivedData {
-                nrfReceivedData(self, data:newData, string: string)
-            }
+            dataCallback?(data: newData, string: string)
+            delegate?.nrfReceivedData?(self, data:newData, string: string)
             
         }
     }
