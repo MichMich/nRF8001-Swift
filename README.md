@@ -1,4 +1,4 @@
-![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206%20GM-orange.svg?style=flat)
+![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206.1%20Beta-orange.svg?style=flat)
 
 ![Bluefruit LE nRF8001 Breakout](https://raw.githubusercontent.com/MichMich/nRF8001-Swift/master/Images/nRF8001-Swift_rounded.jpg)
 

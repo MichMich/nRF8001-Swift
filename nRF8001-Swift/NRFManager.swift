@@ -455,23 +455,23 @@ extension UARTPeripheral {
 // MARK: Class Methods
 extension UARTPeripheral {
     class func uartServiceUUID() -> CBUUID {
-        return CBUUID.UUIDWithString("6e400001-b5a3-f393-e0a9-e50e24dcca9e")
+        return CBUUID(string:"6e400001-b5a3-f393-e0a9-e50e24dcca9e")
     }
     
     class func txCharacteristicsUUID() -> CBUUID {
-        return CBUUID.UUIDWithString("6e400002-b5a3-f393-e0a9-e50e24dcca9e")
+        return CBUUID(string:"6e400002-b5a3-f393-e0a9-e50e24dcca9e")
     }
     
     class func rxCharacteristicsUUID() -> CBUUID {
-        return CBUUID.UUIDWithString("6e400003-b5a3-f393-e0a9-e50e24dcca9e")
+        return CBUUID(string:"6e400003-b5a3-f393-e0a9-e50e24dcca9e")
     }
     
     class func deviceInformationServiceUUID() -> CBUUID{
-        return CBUUID.UUIDWithString("180A")
+        return CBUUID(string:"180A")
     }
     
     class func hardwareRevisionStringUUID() -> CBUUID{
-        return CBUUID.UUIDWithString("2A27")
+        return CBUUID(string:"2A27")
     }
 }
 
