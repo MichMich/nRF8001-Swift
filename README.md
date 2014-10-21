@@ -1,4 +1,4 @@
-![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206.1%20Beta-orange.svg?style=flat)
+![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206.1-orange.svg?style=flat)
 
 ![Bluefruit LE nRF8001 Breakout](https://raw.githubusercontent.com/MichMich/nRF8001-Swift/master/Images/nRF8001-Swift_rounded.jpg)
 
@@ -51,7 +51,7 @@ let nrfManager = NRFManager()
 The Initializer takes 5 arguments. All of these arguments are optional and can be nil:
 
 ```Swift
-let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData, string:String)->())? = nil, autoConnect:Bool = true)
+let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData?, string:String?)->())? = nil, autoConnect:Bool = true)
 ```
 
 - The **delegate** argument sets the delegate for the NRFManager instance. The delegate must conform to the `NRFManagerDelegate`. Default is `nil`.
@@ -60,7 +60,7 @@ let nrfManager = NRFManager(delegate:NRFManagerDelegate? = nil, onConnect connec
 
 - The **onDisconnect** argument can take a closure to execute when the NRFManager disconnects from the nRF8001 module. Default is `nil`.
 
-- The **onData** argument can take a closure to execute when the NRFManager receives data from the nRF8001 module. This closure will receive a `data:NSData` and `string:String` object. Default is `nil`.
+- The **onData** argument can take a closure to execute when the NRFManager receives data from the nRF8001 module. This closure will receive a `data:NSData?` and `string:String?` object. Default is `nil`.
 
 - The **autoConnect** argument will tell the manager if it has to start searching and connect right away, and if it has to reconnect when the connection is lost. Default is `true`.
 
@@ -82,7 +82,7 @@ let nrfClosureExample = NRFManager(
       println("Disconnected")
   },
   onData: {
-      (data:NSData, string:String)->() in
+      (data:NSData?, string:String?)->() in
       println("Recieved data - String: \(string) - Data: \(data)")
   }
 )
@@ -146,7 +146,7 @@ nrfDidDisconnect(nrfManager:NRFManager)
 Called when the NRFManager disconnect from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which disconnected.
 
 ```Swift
-nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)
+nrfReceivedData(nrfManager:NRFManager, data:NSData?, string:String?)
 ```
 Called when the NRFManager receives data from the nRF8001 module. The `nrfManager` variable will contain a reference to the NRFManager instance which received data. `data` will contain the raw data, `string` will contain the string representation of the received data.
 
@@ -180,7 +180,7 @@ class ViewController: UIViewController {
 		      	println("Disconnected")
 		  },
 		  onData: {
-		      	(data:NSData, string:String)->() in
+		      	(data:NSData?, string:String?)->() in
 		      	println("Received data - String: \(string) - Data: \(data)")
 		  }
 		)
@@ -223,7 +223,7 @@ class ViewController: UIViewController, NRFManagerDelegate {
 		println("Disconnected")
 	}
 	    
-	func nrfReceivedData(nrfManager:NRFManager, data: NSData, string: String) {
+	func nrfReceivedData(nrfManager:NRFManager, data: NSData?, string: String?) {
 		println("Received data - String: \(string) - Data: \(data)")
 	}
 }

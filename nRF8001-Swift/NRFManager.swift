@@ -53,7 +53,7 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
     //callbacks
     public var connectionCallback:(()->())?
     public var disconnectionCallback:(()->())?
-    public var dataCallback:((data:NSData, string:String)->())?
+    public var dataCallback:((data:NSData?, string:String?)->())?
     
     public private(set) var connectionMode = ConnectionMode.None
     public private(set) var connectionStatus:ConnectionStatus = ConnectionStatus.Disconnected {
@@ -86,7 +86,7 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
         return Static.instance
     }
  
-    public init(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData, string:String)->())? = nil, autoConnect:Bool = true)
+    public init(delegate:NRFManagerDelegate? = nil, onConnect connectionCallback:(()->())? = nil, onDisconnect disconnectionCallback:(()->())? = nil, onData dataCallback:((data:NSData?, string:String?)->())? = nil, autoConnect:Bool = true)
     {
         super.init()
         self.delegate = delegate
@@ -287,7 +287,7 @@ extension NRFManager {
 @objc public protocol NRFManagerDelegate {
     optional func nrfDidConnect(nrfManager:NRFManager)
     optional func nrfDidDisconnect(nrfManager:NRFManager)
-    optional func nrfReceivedData(nrfManager:NRFManager, data:NSData, string:String)
+    optional func nrfReceivedData(nrfManager:NRFManager, data:NSData?, string:String?)
 }
 
 
@@ -442,7 +442,7 @@ extension UARTPeripheral {
             } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()){
                 log("Did read hardware revision string")
                 // FIX ME: This is not how the original thing worked.
-                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding))
+                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding) ?? "")
             }
         } else {
             log("Error receiving notification for characteristic: \(error)")

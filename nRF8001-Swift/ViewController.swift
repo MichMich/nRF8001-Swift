@@ -24,7 +24,7 @@ class ViewController: UIViewController, NRFManagerDelegate {
                 self.log("C: ★ Disconnected")
             },
             onData: {
-                (data:NSData, string:String)->() in
+                (data:NSData?, string:String?)->() in
                 self.log("C: ⬇ Received data - String: \(string) - Data: \(data)")
             },
             autoConnect: false
@@ -57,7 +57,7 @@ extension ViewController
         self.log("D: ★ Disconnected")
     }
     
-    func nrfReceivedData(nrfManager:NRFManager, data: NSData, string: String) {
+    func nrfReceivedData(nrfManager:NRFManager, data: NSData?, string: String?) {
         self.log("D: ⬇ Received data - String: \(string) - Data: \(data)")
     }
 }
