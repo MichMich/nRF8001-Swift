@@ -1,8 +1,5 @@
-<<<<<<< HEAD
+
 ![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206.1-orange.svg?style=flat)
-=======
-![Xcode Tested](http://img.shields.io/badge/Xcode%20Tested-Xcode%206.1%20GM-orange.svg?style=flat)
->>>>>>> FETCH_HEAD
 
 ![Bluefruit LE nRF8001 Breakout](https://raw.githubusercontent.com/MichMich/nRF8001-Swift/master/Images/nRF8001-Swift_rounded.jpg)
 

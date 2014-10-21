@@ -442,11 +442,8 @@ extension UARTPeripheral {
             } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()){
                 log("Did read hardware revision string")
                 // FIX ME: This is not how the original thing worked.
-<<<<<<< HEAD
-                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding) ?? "")
-=======
                 delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding)!)
->>>>>>> FETCH_HEAD
+
             }
         } else {
             log("Error receiving notification for characteristic: \(error)")
