@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Scheme
-   LastUpgradeVersion = "0600"
+   LastUpgradeVersion = "0710"
    version = "1.3">
    <BuildAction
       parallelizeBuildables = "YES"
@@ -14,7 +14,7 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4C43DBD7198A6E5300C31784"
+               BlueprintIdentifier = "4CACBDF11C0B6F6D006A9937"
                BuildableName = "nRF8001-Swift.app"
                BlueprintName = "nRF8001-Swift"
                ReferencedContainer = "container:nRF8001-Swift.xcodeproj">
@@ -23,45 +23,39 @@
       </BuildActionEntries>
    </BuildAction>
    <TestAction
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
-      shouldUseLaunchSchemeArgsEnv = "YES"
-      buildConfiguration = "Debug">
+      shouldUseLaunchSchemeArgsEnv = "YES">
       <Testables>
-         <TestableReference
-            skipped = "NO">
-            <BuildableReference
-               BuildableIdentifier = "primary"
-               BlueprintIdentifier = "4C43DBE9198A6E5300C31784"
-               BuildableName = "nRF8001-SwiftTests.xctest"
-               BlueprintName = "nRF8001-SwiftTests"
-               ReferencedContainer = "container:nRF8001-Swift.xcodeproj">
-            </BuildableReference>
-         </TestableReference>
       </Testables>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4C43DBD7198A6E5300C31784"
+            BlueprintIdentifier = "4CACBDF11C0B6F6D006A9937"
             BuildableName = "nRF8001-Swift.app"
             BlueprintName = "nRF8001-Swift"
             ReferencedContainer = "container:nRF8001-Swift.xcodeproj">
          </BuildableReference>
       </MacroExpansion>
+      <AdditionalOptions>
+      </AdditionalOptions>
    </TestAction>
    <LaunchAction
+      buildConfiguration = "Debug"
       selectedDebuggerIdentifier = "Xcode.DebuggerFoundation.Debugger.LLDB"
       selectedLauncherIdentifier = "Xcode.DebuggerFoundation.Launcher.LLDB"
       launchStyle = "0"
       useCustomWorkingDirectory = "NO"
-      buildConfiguration = "Debug"
       ignoresPersistentStateOnLaunch = "NO"
       debugDocumentVersioning = "YES"
+      debugServiceExtension = "internal"
       allowLocationSimulation = "YES">
-      <BuildableProductRunnable>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4C43DBD7198A6E5300C31784"
+            BlueprintIdentifier = "4CACBDF11C0B6F6D006A9937"
             BuildableName = "nRF8001-Swift.app"
             BlueprintName = "nRF8001-Swift"
             ReferencedContainer = "container:nRF8001-Swift.xcodeproj">
@@ -71,15 +65,16 @@
       </AdditionalOptions>
    </LaunchAction>
    <ProfileAction
+      buildConfiguration = "Release"
       shouldUseLaunchSchemeArgsEnv = "YES"
       savedToolIdentifier = ""
       useCustomWorkingDirectory = "NO"
-      buildConfiguration = "Release"
       debugDocumentVersioning = "YES">
-      <BuildableProductRunnable>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "4C43DBD7198A6E5300C31784"
+            BlueprintIdentifier = "4CACBDF11C0B6F6D006A9937"
             BuildableName = "nRF8001-Swift.app"
             BlueprintName = "nRF8001-Swift"
             ReferencedContainer = "container:nRF8001-Swift.xcodeproj">

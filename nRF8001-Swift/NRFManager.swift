@@ -36,7 +36,7 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
     
 
     //Private Properties
-    private let bluetoothManager:CBCentralManager!
+    private var bluetoothManager:CBCentralManager!
     private var currentPeripheral: UARTPeripheral? {
         didSet {
             if let p = currentPeripheral {
@@ -136,7 +136,7 @@ extension NRFManager {
 
     private func log(logMessage: String) {
         if (verbose) {
-            println("NRFManager: \(logMessage)")
+            print("NRFManager: \(logMessage)")
         }
     }
 }
@@ -161,7 +161,7 @@ extension NRFManager {
         }
         
         log("Disconnect ...")
-        bluetoothManager.cancelPeripheralConnection(currentPeripheral?.peripheral)
+        bluetoothManager.cancelPeripheralConnection((currentPeripheral?.peripheral)!)
     }
     
     public func writeString(string:String) -> Bool
@@ -193,7 +193,7 @@ extension NRFManager {
 // MARK: - CBCentralManagerDelegate Methods
 extension NRFManager {
 
-        public func centralManagerDidUpdateState(central: CBCentralManager!)
+        public func centralManagerDidUpdateState(central: CBCentralManager)
         {
             log("Central Manager Did UpdateState")
             if central.state == .PoweredOn {
@@ -210,14 +210,14 @@ extension NRFManager {
             }
         }
     
-        public func centralManager(central: CBCentralManager!, didDiscoverPeripheral peripheral: CBPeripheral!, advertisementData: [NSObject : AnyObject]!, RSSI: NSNumber!)
+        public func centralManager(central: CBCentralManager, didDiscoverPeripheral peripheral: CBPeripheral, advertisementData: [String : AnyObject], RSSI: NSNumber)
         {
             log("Did discover peripheral: \(peripheral.name)")
             bluetoothManager.stopScan()
             connectPeripheral(peripheral)
         }
     
-        public func centralManager(central: CBCentralManager!, didConnectPeripheral peripheral: CBPeripheral!)
+        public func centralManager(central: CBCentralManager, didConnectPeripheral peripheral: CBPeripheral)
         {
             log("Did Connect Peripheral")
             if currentPeripheral?.peripheral == peripheral {
@@ -231,7 +231,7 @@ extension NRFManager {
             }
         }
     
-        public func centralManager(central: CBCentralManager!, didDisconnectPeripheral peripheral: CBPeripheral!, error: NSError!)
+        public func centralManager(central: CBCentralManager, didDisconnectPeripheral peripheral: CBPeripheral, error: NSError?)
         {
             log("Peripheral Disconnected: \(peripheral.name)")
             
@@ -263,8 +263,8 @@ extension NRFManager {
             let string = NSString(data: newData, encoding:NSUTF8StringEncoding)
             log("String: \(string)")
             
-            dataCallback?(data: newData, string: string!)
-            delegate?.nrfReceivedData?(self, data:newData, string: string!)
+            dataCallback?(data: newData, string: string! as String)
+            delegate?.nrfReceivedData?(self, data:newData, string: string! as String)
             
         }
     }
@@ -299,7 +299,7 @@ extension NRFManager {
 */
 
 // MARK: UARTPeripheral Initialization
-private class UARTPeripheral:NSObject, CBPeripheralDelegate {
+public class UARTPeripheral:NSObject, CBPeripheralDelegate {
     
     private var peripheral:CBPeripheral
     private var uartService:CBService?
@@ -332,18 +332,22 @@ extension UARTPeripheral {
     private func setupPeripheralForUse(peripheral:CBPeripheral)
     {
         log("Set up peripheral for use");
-        for s:CBService in peripheral.services as [CBService] {
-            for c:CBCharacteristic in s.characteristics as [CBCharacteristic] {
-                if compareID(c.UUID, toID: UARTPeripheral.rxCharacteristicsUUID()) {
-                    log("Found RX Characteristics")
-                    rxCharacteristic = c
-                    peripheral.setNotifyValue(true, forCharacteristic: rxCharacteristic)
-                } else if compareID(c.UUID, toID: UARTPeripheral.txCharacteristicsUUID()) {
-                    log("Found TX Characteristics")
-                    txCharacteristic = c
-                } else if compareID(c.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()) {
-                    log("Found Hardware Revision String characteristic")
-                    peripheral.readValueForCharacteristic(c)
+        if let services = peripheral.services {
+            for service:CBService in services {
+                if let characteristics = service.characteristics {
+                    for characteristic:CBCharacteristic in characteristics {
+                        if compareID(characteristic.UUID, toID: UARTPeripheral.rxCharacteristicsUUID()) {
+                            log("Found RX Characteristics")
+                            rxCharacteristic = characteristic
+                            peripheral.setNotifyValue(true, forCharacteristic: rxCharacteristic!)
+                        } else if compareID(characteristic.UUID, toID: UARTPeripheral.txCharacteristicsUUID()) {
+                            log("Found TX Characteristics")
+                            txCharacteristic = characteristic
+                        } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()) {
+                            log("Found Hardware Revision String characteristic")
+                            peripheral.readValueForCharacteristic(characteristic)
+                        }
+                    }
                 }
             }
         }
@@ -351,7 +355,7 @@ extension UARTPeripheral {
     
     private func log(logMessage: String) {
         if (verbose) {
-            println("UARTPeripheral: \(logMessage)")
+            print("UARTPeripheral: \(logMessage)")
         }
     }
 
@@ -371,7 +375,7 @@ extension UARTPeripheral {
     private func writeString(string:String)
     {
         log("Write string: \(string)")
-        let data = NSData(bytes: string, length: countElements(string))
+        let data = NSData(bytes: string, length: string.characters.count)
         writeRawData(data)
     }
     
@@ -381,9 +385,9 @@ extension UARTPeripheral {
         
         if let txCharacteristic = self.txCharacteristic {
             
-            if txCharacteristic.properties & .WriteWithoutResponse != nil {
+            if txCharacteristic.properties.intersect(.WriteWithoutResponse) != [] {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithoutResponse)
-            } else if txCharacteristic.properties & .Write != nil {
+            } else if txCharacteristic.properties.intersect(.Write) != [] {
                 peripheral.writeValue(data, forCharacteristic: txCharacteristic, type: .WithResponse)
             } else {
                 log("No write property on TX characteristics: \(txCharacteristic.properties)")
@@ -395,18 +399,21 @@ extension UARTPeripheral {
 
 // MARK: CBPeripheral Delegate methods
 extension UARTPeripheral {
-    private func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError!) {
+    public func peripheral(peripheral: CBPeripheral, didDiscoverServices error:NSError?) {
+        
         if error == nil {
-            for s:CBService in peripheral.services as [CBService] {
-                if s.characteristics != nil {
-                    var e = NSError()
-                    //peripheral(peripheral, didDiscoverCharacteristicsForService: s, error: e)
-                } else if compareID(s.UUID, toID: UARTPeripheral.uartServiceUUID()) {
-                    log("Found correct service")
-                    uartService = s
-                    peripheral.discoverCharacteristics([UARTPeripheral.txCharacteristicsUUID(),UARTPeripheral.rxCharacteristicsUUID()], forService: uartService)
-                } else if compareID(s.UUID, toID: UARTPeripheral.deviceInformationServiceUUID()) {
-                    peripheral.discoverCharacteristics([UARTPeripheral.hardwareRevisionStringUUID()], forService: s)
+            if let services = peripheral.services {
+                for service:CBService in services {
+                    if service.characteristics != nil {
+                        //var e = NSError()
+                        //peripheral(peripheral, didDiscoverCharacteristicsForService: s, error: e)
+                    } else if compareID(service.UUID, toID: UARTPeripheral.uartServiceUUID()) {
+                        log("Found correct service")
+                        uartService = service
+                        peripheral.discoverCharacteristics([UARTPeripheral.txCharacteristicsUUID(),UARTPeripheral.rxCharacteristicsUUID()], forService: uartService!)
+                    } else if compareID(service.UUID, toID: UARTPeripheral.deviceInformationServiceUUID()) {
+                        peripheral.discoverCharacteristics([UARTPeripheral.hardwareRevisionStringUUID()], forService: service)
+                    }
                 }
             }
         } else {
@@ -416,14 +423,15 @@ extension UARTPeripheral {
         }
     }
     
-    private func peripheral(peripheral: CBPeripheral!, didDiscoverCharacteristicsForService service: CBService!, error: NSError!)
+    public func peripheral(peripheral: CBPeripheral, didDiscoverCharacteristicsForService service: CBService, error: NSError?)
     {
         if error  == nil {
             log("Did Discover Characteristics For Service: \(service.description)")
-            let services:[CBService] = peripheral.services as [CBService]
-            let s = services[services.count - 1]
-            if compareID(service.UUID, toID: s.UUID) {
-                setupPeripheralForUse(peripheral)
+            if let services = peripheral.services {
+                let s = services[services.count - 1]
+                if compareID(service.UUID, toID: s.UUID) {
+                    setupPeripheralForUse(peripheral)
+                }
             }
         } else {
             log("Error discovering characteristics: \(error)")
@@ -432,17 +440,19 @@ extension UARTPeripheral {
         }
     }
     
-   private func peripheral(peripheral: CBPeripheral!, didUpdateValueForCharacteristic characteristic: CBCharacteristic!, error: NSError!)
+   public func peripheral(peripheral: CBPeripheral, didUpdateValueForCharacteristic characteristic: CBCharacteristic, error: NSError?)
     {
         log("Did Update Value For Characteristic")
         if error == nil {
             if characteristic == rxCharacteristic {
-                log("Recieved: \(characteristic.value)")
-                delegate.didReceiveData(characteristic.value)
+                if let value = characteristic.value {
+                    log("Recieved: \(value)")
+                    delegate.didReceiveData(value)
+                }
             } else if compareID(characteristic.UUID, toID: UARTPeripheral.hardwareRevisionStringUUID()){
                 log("Did read hardware revision string")
                 // FIX ME: This is not how the original thing worked.
-                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding)!)
+                delegate.didReadHardwareRevisionString(NSString(CString:characteristic.description, encoding: NSUTF8StringEncoding)! as String)
 
             }
         } else {
