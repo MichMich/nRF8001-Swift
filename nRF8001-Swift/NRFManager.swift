@@ -35,6 +35,7 @@ public enum ConnectionStatus {
 public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelegate {
     
 
+    private var arduinoToConnect: String?
     //Private Properties
     private var bluetoothManager:CBCentralManager!
     private var currentPeripheral: UARTPeripheral? {
@@ -74,7 +75,9 @@ public class NRFManager:NSObject, CBCentralManagerDelegate, UARTPeripheralDelega
         }
     }
 
-
+    public func showName() -> String {
+        return (currentPeripheral?.peripheral.name)!
+    }
     
     
     
@@ -144,12 +147,12 @@ extension NRFManager {
 // MARK: - Public Methods
 extension NRFManager {
     
-    public func connect() {
+    public func connect(arduinoName: String) {
         if currentPeripheral != nil && connectionStatus == .Connected {
             log("Asked to connect, but already connected!")
             return
         }
-        
+        self.arduinoToConnect = arduinoName
         scanForPeripheral()
     }
     
@@ -200,7 +203,7 @@ extension NRFManager {
                 //respond to powered on
                 log("Powered on!")
                 if (autoConnect) {
-                    connect()
+                    connect("")
                 }
                 
             } else if central.state == .PoweredOff {
@@ -212,9 +215,13 @@ extension NRFManager {
     
         public func centralManager(central: CBCentralManager, didDiscoverPeripheral peripheral: CBPeripheral, advertisementData: [String : AnyObject], RSSI: NSNumber)
         {
-            log("Did discover peripheral: \(peripheral.name)")
-            bluetoothManager.stopScan()
-            connectPeripheral(peripheral)
+            log("Did discover peripheral: \(peripheral.name!)")
+            //bluetoothManager.stopScan()
+            
+            if peripheral.name == arduinoToConnect{
+                connectPeripheral(peripheral)
+            }
+            
         }
     
         public func centralManager(central: CBCentralManager, didConnectPeripheral peripheral: CBPeripheral)
@@ -225,7 +232,7 @@ extension NRFManager {
                     log("Did connect to existing peripheral: \(peripheral.name)")
                     currentPeripheral?.peripheral(peripheral, didDiscoverServices: nil)
                 } else {
-                    log("Did connect peripheral: \(peripheral.name)")
+                    log("Did connect peripheral: \(peripheral.name!)")
                     currentPeripheral?.didConnect()
                 }
             }
@@ -242,9 +249,11 @@ extension NRFManager {
             }
             
             if autoConnect {
-                connect()
+                connect("")
             }
         }
+    
+    
     
         //optional func centralManager(central: CBCentralManager!, willRestoreState dict: [NSObject : AnyObject]!)
         //optional func centralManager(central: CBCentralManager!, didRetrievePeripherals peripherals: [AnyObject]!)
@@ -363,12 +372,12 @@ extension UARTPeripheral {
     {
         log("Did connect")
         if peripheral.services != nil {
-            log("Skipping service discovery for: \(peripheral.name)")
+            log("Skipping service discovery for: \(peripheral.name!)")
             peripheral(peripheral, didDiscoverServices: nil)
             return
         }
         
-        log("Start service discovery: \(peripheral.name)")
+        log("Start service discovery: \(peripheral.name!)")
         peripheral.discoverServices([UARTPeripheral.uartServiceUUID(), UARTPeripheral.deviceInformationServiceUUID()])
     }
     
@@ -492,6 +501,3 @@ private protocol UARTPeripheralDelegate {
     func didReadHardwareRevisionString(string:String)
     func uartDidEncounterError(error:String)
 }
-
-
-
